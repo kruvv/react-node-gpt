@@ -1,16 +1,15 @@
 
 import './App.css'
 import FormInput, {type IMSGS} from "./components/forms/FormInput.tsx";
-import MessagesArea from "./components/MessagesArea.tsx";
+import MessagesArea from "./components/messages/MessagesArea.tsx";
 import {useState} from "react";
 
 
 
 
 function App() {
-
-    const [isTyping, setIsTyping] = useState<boolean>(false);
-    const [chats, setChats] = useState<IMSGS[]>([]);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [chats, setChats] = useState<IMSGS[]>([]);
 
   return (
       <>
@@ -19,13 +18,7 @@ function App() {
           </header>
 
           <main>
-           <MessagesArea chats={chats} />
-
-            <div className={isTyping ? '' : 'hide'}>
-              <p>
-                <i>{isTyping ? 'Think...' : ''}</i>
-              </p>
-            </div>
+            <MessagesArea chats={chats} isTyping={isTyping} />
           </main>
 
           <footer>

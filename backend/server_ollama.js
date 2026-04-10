@@ -1,23 +1,23 @@
-import OpenAI from "openai";
+import { Ollama } from 'ollama';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import 'dotenv/config';
 
-
 const app = express();
 const PORT = Number(process.env.PORT) || 8000;
-const MODEL = process.env.MODEL_CHAT
+const MODEL = process.env.OLLAMA_MODEL_CLOUD_120;
 app.use(bodyParser.json());
 app.use(cors());
 
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+const ollama = new Ollama({
+    host: 'https://ollama.com',
+    headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` }
 });
 
-// Эта ручка — простой “health check” эндпоинт. Быстрая проверка, что процесс сервера жив и принимает HTTP-запросы.
-app.get('/healthz', (_req, res) => { res.sendStatus(204); });
+// console.log('port:', PORT)
+// console.log('model:', MODEL)
+// console.log('ollama: ', ollama)
 
 
 app.post('/', async (req, res) => {
@@ -39,35 +39,42 @@ app.post('/', async (req, res) => {
             return res.status(400).json({ error: 'No valid messages provided' });
         }
 
-        const completion = await openai.chat.completions.create({
+        // console.log('ollama+: ', ollama)
+        // console.log('messages: ', messages)
+
+        const completion = await ollama.chat({
             model: MODEL,
             messages,
+            // stream: false,
             // temperature: 0.7,
         });
+        // for await (const part of completion) {
+        //     console.log(part)
+        //     // process.stdout.write(part.message.content)
+        //
+        // }
+        // console.log('completion: ', completion)
 
-        const reply = completion?.choices?.[0]?.message?.content?.trim();
+        const reply = completion?.message?.content?.trim();
+
         if (!reply) {
             return res.status(502).json({ error: 'Model returned empty response' });
         }
 
-    // Frontend expects an object with role/content in data.output
+        // Frontend expects an object with role/content in data.output
         res.json({
-            output: { role: 'assistant', content: reply },
+            output: {
+                role: completion?.message?.role?.trim(),
+                content: reply,
+                thinking: completion?.message?.thinking?.trim()
+            },
         });
     } catch (error) {
-        console.error('OpenAI chat error:', error);
+        console.error('Ollama chat error:', error);
         const status = error?.status ?? 500;
         res.status(status).json({ error: 'Failed to generate response' });
     }
 });
 
-app.get('/responses', async (request, response) => {
-    response = await openai.responses.retrieve("resp_123");
-    console.log(response);
-})
-
 
 app.listen(PORT, () =>  console.log(`listening on port ${PORT}`));
-
-
-

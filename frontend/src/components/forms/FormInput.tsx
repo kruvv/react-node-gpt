@@ -5,6 +5,7 @@ export type RolesType = 'user' | 'assistant'
 export interface IMSGS {
     role: RolesType
     content: string
+    thinking?: string
 }
 
 interface IFormInput {
